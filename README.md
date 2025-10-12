@@ -25,7 +25,7 @@ Tiny Note Backend（Rust、Axum）
 API
  - 统一前缀：`/api/tiny-note`
  - POST `/api/tiny-note/auth/register` { username, email, password }
- - POST `/api/tiny-note/auth/login` { username, password } -> { token }
+ - POST `/api/tiny-note/auth/login` { email, password } -> { token }
  - 笔记接口（需要 `Authorization: Bearer <token>`）：
    - POST `/api/tiny-note/notes`
    - GET `/api/tiny-note/notes`（查询参数：`tag`, `q`）

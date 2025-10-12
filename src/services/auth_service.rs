@@ -63,8 +63,8 @@ pub async fn register(state: &AppState, req: RegisterRequest) -> Result<User, Au
 
 pub async fn login(state: &AppState, req: LoginRequest) -> Result<LoginResponse, AuthError> {
     let user = sqlx::query_as::<_, User>(
-        "SELECT id, username, email, password_hash, CAST(created_at AS DATETIME) AS created_at FROM users WHERE username = ? LIMIT 1")
-        .bind(&req.username)
+        "SELECT id, username, email, password_hash, CAST(created_at AS DATETIME) AS created_at FROM users WHERE email = ? LIMIT 1")
+        .bind(&req.email)
         .fetch_optional(&state.db)
         .await?;
     let user = match user { Some(u) => u, None => return Err(AuthError::InvalidCredentials) };

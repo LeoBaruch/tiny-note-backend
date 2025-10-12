@@ -121,7 +121,7 @@ impl<'de> serde::Deserialize<'de> for UpdateNoteRequest {
 // Manual FromRow for Note
 impl<'r> sqlx::FromRow<'r, MySqlRow> for Note {
     fn from_row(row: &'r MySqlRow) -> Result<Self, sqlx::Error> {
-        let offset = FixedOffset::east(8 * 3600);
+        let offset = FixedOffset::east_opt(8 * 3600).unwrap();
         let created_naive: NaiveDateTime = row.try_get("created_at")?;
         let updated_naive: NaiveDateTime = row.try_get("updated_at")?;
         let created_at = offset.from_local_datetime(&created_naive).single().unwrap_or_else(|| {

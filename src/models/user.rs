@@ -20,7 +20,7 @@ pub struct RegisterRequest {
 
 #[derive(Debug, Clone)]
 pub struct LoginRequest {
-    pub username: String,
+    pub email: String,
     pub password: String,
 }
 
@@ -106,24 +106,24 @@ impl<'de> serde::Deserialize<'de> for LoginRequest {
         impl<'de> Visitor<'de> for LoginVisitor {
             type Value = LoginRequest;
             fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-                write!(f, "a map with username and password")
+                write!(f, "a map with email and password")
             }
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
             where
                 A: MapAccess<'de>,
             {
-                let mut username: Option<String> = None;
+                let mut email: Option<String> = None;
                 let mut password: Option<String> = None;
                 while let Some(key) = map.next_key::<String>()? {
                     match key.as_str() {
-                        "username" => username = Some(map.next_value()?),
+                        "email" => email = Some(map.next_value()?),
                         "password" => password = Some(map.next_value()?),
                         _ => { let _ = map.next_value::<serde::de::IgnoredAny>()?; }
                     }
                 }
-                let username = username.ok_or_else(|| de::Error::missing_field("username"))?;
+                let email = email.ok_or_else(|| de::Error::missing_field("email"))?;
                 let password = password.ok_or_else(|| de::Error::missing_field("password"))?;
-                Ok(LoginRequest { username, password })
+                Ok(LoginRequest { email, password })
             }
         }
         deserializer.deserialize_map(LoginVisitor)
@@ -134,7 +134,7 @@ impl<'de> serde::Deserialize<'de> for LoginRequest {
 impl<'r> sqlx::FromRow<'r, MySqlRow> for User {
     fn from_row(row: &'r MySqlRow) -> Result<Self, sqlx::Error> {
         let naive: NaiveDateTime = row.try_get("created_at")?;
-        let offset = FixedOffset::east(8 * 3600);
+        let offset = FixedOffset::east_opt(8 * 3600).unwrap();
         let created_at = offset.from_local_datetime(&naive).single().unwrap_or_else(|| {
             // Fallback: interpret as UTC and convert to +08:00
             let utc_dt = chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(naive, chrono::Utc);

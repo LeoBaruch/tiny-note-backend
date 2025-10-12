@@ -62,7 +62,7 @@ src/
 ### 1️⃣ 用户系统
 - 统一前缀：`/api/tiny-note`
 - `POST /api/tiny-note/auth/register` → 注册新用户
-- `POST /api/tiny-note/auth/login` → 登录并获取 JWT
+- `POST /api/tiny-note/auth/login` → 使用 email+password 登录并获取 JWT
 - 使用 Argon2 进行密码哈希
 - 基于 JWT 的认证（Bearer Token）
 - 使用 Redis 存储会话/令牌黑名单

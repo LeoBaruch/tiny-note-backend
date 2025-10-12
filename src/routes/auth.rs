@@ -18,7 +18,7 @@ async fn register(State(state): State<AppState>, Json(req): Json<RegisterRequest
 }
 
 async fn login(State(state): State<AppState>, Json(req): Json<LoginRequest>) -> impl IntoResponse {
-    info!(target = "http", route = "/auth/login", username = %req.username, "incoming login request");
+    info!(target = "http", route = "/auth/login", email = %req.email, "incoming login request");
     match auth_service::login(&state, req).await {
         Ok(resp) => (axum::http::StatusCode::OK, Json(resp)).into_response(),
         Err(e) => error_response(e),
