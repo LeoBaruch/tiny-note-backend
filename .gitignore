@@ -1,0 +1,21 @@
+# Rust build artifacts
+/target/
+
+# Rust backup files
+**/*.rs.bk
+
+# Environment files
+.env
+
+# macOS
+.DS_Store
+
+# IDE settings
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Coverage reports
+coverage/

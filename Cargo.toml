@@ -1,0 +1,32 @@
+[package]
+name = "tiny-note-backend"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "demo"
+path = "src/demo.rs"
+
+[dependencies]
+axum = { version = "0.7" }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+dotenvy = "0.15"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["serde", "v4"] }
+jsonwebtoken = "9"
+argon2 = "0.5"
+thiserror = "1.0"
+redis = { version = "0.25", features = ["aio", "tokio-native-tls-comp"] }
+sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio", "mysql", "uuid", "chrono", "macros"] }
+tower-cookies = "0.9"
+anyhow = "1.0"
+tower-http = { version = "0.5", features = ["cors"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
