@@ -25,8 +25,16 @@ pub struct LoginRequest {
 }
 
 #[derive(Debug, Clone)]
+pub struct UserInfo {
+    pub id: Uuid,
+    pub username: String,
+    pub email: String,
+}
+
+#[derive(Debug, Clone)]
 pub struct LoginResponse {
     pub token: String,
+    pub user_info: UserInfo,
 }
 
 // Manual Serialize implementations to avoid proc-macro usage
@@ -46,14 +54,29 @@ impl serde::Serialize for User {
     }
 }
 
+impl serde::Serialize for UserInfo {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut st = serializer.serialize_struct("UserInfo", 3)?;
+        st.serialize_field("id", &self.id)?;
+        st.serialize_field("username", &self.username)?;
+        st.serialize_field("email", &self.email)?;
+        st.end()
+    }
+}
+
 impl serde::Serialize for LoginResponse {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: serde::Serializer,
     {
         use serde::ser::SerializeStruct;
-        let mut st = serializer.serialize_struct("LoginResponse", 1)?;
+        let mut st = serializer.serialize_struct("LoginResponse", 2)?;
         st.serialize_field("token", &self.token)?;
+        st.serialize_field("user_info", &self.user_info)?;
         st.end()
     }
 }
@@ -83,13 +106,19 @@ impl<'de> serde::Deserialize<'de> for RegisterRequest {
                         "username" => username = Some(map.next_value()?),
                         "email" => email = Some(map.next_value()?),
                         "password" => password = Some(map.next_value()?),
-                        _ => { let _ = map.next_value::<serde::de::IgnoredAny>()?; }
+                        _ => {
+                            let _ = map.next_value::<serde::de::IgnoredAny>()?;
+                        }
                     }
                 }
                 let username = username.ok_or_else(|| de::Error::missing_field("username"))?;
                 let email = email.ok_or_else(|| de::Error::missing_field("email"))?;
                 let password = password.ok_or_else(|| de::Error::missing_field("password"))?;
-                Ok(RegisterRequest { username, email, password })
+                Ok(RegisterRequest {
+                    username,
+                    email,
+                    password,
+                })
             }
         }
         deserializer.deserialize_map(RegVisitor)
@@ -118,7 +147,9 @@ impl<'de> serde::Deserialize<'de> for LoginRequest {
                     match key.as_str() {
                         "email" => email = Some(map.next_value()?),
                         "password" => password = Some(map.next_value()?),
-                        _ => { let _ = map.next_value::<serde::de::IgnoredAny>()?; }
+                        _ => {
+                            let _ = map.next_value::<serde::de::IgnoredAny>()?;
+                        }
                     }
                 }
                 let email = email.ok_or_else(|| de::Error::missing_field("email"))?;
@@ -135,11 +166,15 @@ impl<'r> sqlx::FromRow<'r, MySqlRow> for User {
     fn from_row(row: &'r MySqlRow) -> Result<Self, sqlx::Error> {
         let naive: NaiveDateTime = row.try_get("created_at")?;
         let offset = FixedOffset::east_opt(8 * 3600).unwrap();
-        let created_at = offset.from_local_datetime(&naive).single().unwrap_or_else(|| {
-            // Fallback: interpret as UTC and convert to +08:00
-            let utc_dt = chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(naive, chrono::Utc);
-            utc_dt.with_timezone(&offset)
-        });
+        let created_at = offset
+            .from_local_datetime(&naive)
+            .single()
+            .unwrap_or_else(|| {
+                // Fallback: interpret as UTC and convert to +08:00
+                let utc_dt =
+                    chrono::DateTime::<chrono::Utc>::from_naive_utc_and_offset(naive, chrono::Utc);
+                utc_dt.with_timezone(&offset)
+            });
         Ok(User {
             id: row.try_get("id")?,
             username: row.try_get("username")?,

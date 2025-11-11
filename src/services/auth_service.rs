@@ -1,6 +1,9 @@
 use crate::{
-    models::user::{LoginRequest, LoginResponse, RegisterRequest, User},
-    utils::{jwt::generate_token, password::{hash_password, verify_password}},
+    models::user::{LoginRequest, LoginResponse, RegisterRequest, User, UserInfo},
+    utils::{
+        jwt::generate_token,
+        password::{hash_password, verify_password},
+    },
     AppState,
 };
 use sqlx::{self};
@@ -28,20 +31,27 @@ impl std::fmt::Display for AuthError {
 impl std::error::Error for AuthError {}
 
 impl From<sqlx::Error> for AuthError {
-    fn from(e: sqlx::Error) -> Self { AuthError::Db(e) }
+    fn from(e: sqlx::Error) -> Self {
+        AuthError::Db(e)
+    }
 }
 
 impl From<anyhow::Error> for AuthError {
-    fn from(e: anyhow::Error) -> Self { AuthError::Internal(e) }
+    fn from(e: anyhow::Error) -> Self {
+        AuthError::Internal(e)
+    }
 }
 
 pub async fn register(state: &AppState, req: RegisterRequest) -> Result<User, AuthError> {
-    let exists: Option<(i64,)> = sqlx::query_as("SELECT 1 as count FROM users WHERE username = ? OR email = ? LIMIT 1")
-        .bind(&req.username)
-        .bind(&req.email)
-        .fetch_optional(&state.db)
-        .await?;
-    if exists.is_some() { return Err(AuthError::Conflict); }
+    let exists: Option<(i64,)> =
+        sqlx::query_as("SELECT 1 as count FROM users WHERE username = ? OR email = ? LIMIT 1")
+            .bind(&req.username)
+            .bind(&req.email)
+            .fetch_optional(&state.db)
+            .await?;
+    if exists.is_some() {
+        return Err(AuthError::Conflict);
+    }
 
     let user_id = Uuid::new_v4();
     let password_hash = hash_password(&req.password)?;
@@ -67,14 +77,26 @@ pub async fn login(state: &AppState, req: LoginRequest) -> Result<LoginResponse,
         .bind(&req.email)
         .fetch_optional(&state.db)
         .await?;
-    let user = match user { Some(u) => u, None => return Err(AuthError::InvalidCredentials) };
+    let user = match user {
+        Some(u) => u,
+        None => return Err(AuthError::InvalidCredentials),
+    };
 
     let valid = verify_password(&req.password, &user.password_hash)?;
-    if !valid { return Err(AuthError::InvalidCredentials); }
+    if !valid {
+        return Err(AuthError::InvalidCredentials);
+    }
 
     let (token, _) = generate_token(user.id, &state.jwt_secret, 60)?; // 60 minutes
 
     // No need to store token in redis by default; blacklist on logout feature could be added.
     // For demonstration, we simply return the token.
-    Ok(LoginResponse { token })
+    Ok(LoginResponse {
+        token,
+        user_info: UserInfo {
+            id: user.id,
+            username: user.username,
+            email: user.email,
+        },
+    })
 }

@@ -2,10 +2,15 @@
 name = "tiny-note-backend"
 version = "0.1.0"
 edition = "2021"
+default-run = "main"
 
 [[bin]]
 name = "demo"
 path = "src/demo.rs"
+
+[[bin]]
+name = "main"
+path = "src/main.rs"
 
 [dependencies]
 axum = { version = "0.7" }
@@ -21,7 +26,13 @@ jsonwebtoken = "9"
 argon2 = "0.5"
 thiserror = "1.0"
 redis = { version = "0.25", features = ["aio", "tokio-native-tls-comp"] }
-sqlx = { version = "0.7", default-features = false, features = ["runtime-tokio", "mysql", "uuid", "chrono", "macros"] }
+sqlx = { version = "0.7", default-features = false, features = [
+  "runtime-tokio",
+  "mysql",
+  "uuid",
+  "chrono",
+  "macros",
+] }
 tower-cookies = "0.9"
 anyhow = "1.0"
 tower-http = { version = "0.5", features = ["cors"] }

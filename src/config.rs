@@ -19,12 +19,12 @@ pub enum ConfigError {
 
 impl Config {
     pub fn from_env() -> Result<Self, ConfigError> {
-        let database_url = env::var("DATABASE_URL")
-            .map_err(|_| ConfigError::MissingEnv("DATABASE_URL".into()))?;
-        let redis_url = env::var("REDIS_URL")
-            .map_err(|_| ConfigError::MissingEnv("REDIS_URL".into()))?;
-        let jwt_secret = env::var("JWT_SECRET")
-            .map_err(|_| ConfigError::MissingEnv("JWT_SECRET".into()))?;
+        let database_url =
+            env::var("DATABASE_URL").map_err(|_| ConfigError::MissingEnv("DATABASE_URL".into()))?;
+        let redis_url =
+            env::var("REDIS_URL").map_err(|_| ConfigError::MissingEnv("REDIS_URL".into()))?;
+        let jwt_secret =
+            env::var("JWT_SECRET").map_err(|_| ConfigError::MissingEnv("JWT_SECRET".into()))?;
         let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
         let port = port
             .parse::<u16>()
