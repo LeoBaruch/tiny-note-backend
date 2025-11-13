@@ -89,14 +89,26 @@ pub async fn login(state: &AppState, req: LoginRequest) -> Result<LoginResponse,
 
     let (token, _) = generate_token(user.id, &state.jwt_secret, 60)?; // 60 minutes
 
-    // No need to store token in redis by default; blacklist on logout feature could be added.
-    // For demonstration, we simply return the token.
-    Ok(LoginResponse {
-        token,
+    let response = LoginResponse {
+        token: token.clone(),
         user_info: UserInfo {
             id: user.id,
-            username: user.username,
-            email: user.email,
+            username: user.username.clone(),
+            email: user.email.clone(),
+            // TODO: 这里暂时先写死，以后再做优化
+            avatar: "/api/tiny-note/static/images/default_avatar.jpeg".to_string(),
         },
-    })
+    };
+
+    tracing::info!(
+        user_id = %user.id,
+        username = %user.username,
+        email = %user.email,
+        avatar = %response.user_info.avatar,
+        "User logged in successfully"
+    );
+
+    // No need to store token in redis by default; blacklist on logout feature could be added.
+    // For demonstration, we simply return the token.
+    Ok(response)
 }
