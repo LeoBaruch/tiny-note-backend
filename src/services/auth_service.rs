@@ -96,7 +96,7 @@ pub async fn login(state: &AppState, req: LoginRequest) -> Result<LoginResponse,
             username: user.username.clone(),
             email: user.email.clone(),
             // TODO: 这里暂时先写死，以后再做优化
-            avatar: "/api/tiny-note/static/images/default_avatar.jpeg".to_string(),
+            avatar: "/static/images/default_avatar.jpeg".to_string(),
         },
     };
 
