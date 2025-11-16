@@ -1,13 +1,18 @@
-use axum::{extract::{Path, Query, State, Extension}, response::IntoResponse, routing::{get, post}, Json, Router};
-use std::collections::HashMap;
+use crate::app_middleware::auth_middleware::CurrentUser;
 use crate::{
     models::note::{CreateNoteRequest, UpdateNoteRequest},
     services::note_service,
     AppState,
 };
-use crate::app_middleware::auth_middleware::CurrentUser;
-use uuid::Uuid;
+use axum::{
+    extract::{Extension, Path, Query, State},
+    response::IntoResponse,
+    routing::{get, post},
+    Json, Router,
+};
+use std::collections::HashMap;
 use tracing::{error, info};
+use uuid::Uuid;
 
 // 使用通用查询映射，避免依赖派生宏导致的 IDE 诊断错误
 
@@ -17,7 +22,11 @@ pub fn router() -> Router<AppState> {
         .route("/notes/:id", get(get_one).put(update).delete(remove))
 }
 
-async fn create(State(state): State<AppState>, Extension(CurrentUser(user_id)): Extension<CurrentUser>, Json(req): Json<CreateNoteRequest>) -> impl IntoResponse {
+async fn create(
+    State(state): State<AppState>,
+    Extension(CurrentUser(user_id)): Extension<CurrentUser>,
+    Json(req): Json<CreateNoteRequest>,
+) -> impl IntoResponse {
     info!(target = "http", route = "/notes#create", user_id = %user_id, title = %req.title, tags = ?req.tags, "incoming create note");
     match note_service::create_note(&state, user_id, req).await {
         Ok(note) => (axum::http::StatusCode::CREATED, Json(note)).into_response(),
@@ -25,7 +34,11 @@ async fn create(State(state): State<AppState>, Extension(CurrentUser(user_id)): 
     }
 }
 
-async fn list(State(state): State<AppState>, Extension(CurrentUser(user_id)): Extension<CurrentUser>, Query(params): Query<HashMap<String, String>>) -> impl IntoResponse {
+async fn list(
+    State(state): State<AppState>,
+    Extension(CurrentUser(user_id)): Extension<CurrentUser>,
+    Query(params): Query<HashMap<String, String>>,
+) -> impl IntoResponse {
     let tag = params.get("tag").cloned();
     let q = params.get("q").cloned();
     info!(target = "http", route = "/notes#list", user_id = %user_id, tag = ?tag, q = ?q, "incoming list notes");
@@ -35,7 +48,11 @@ async fn list(State(state): State<AppState>, Extension(CurrentUser(user_id)): Ex
     }
 }
 
-async fn get_one(State(state): State<AppState>, Extension(CurrentUser(user_id)): Extension<CurrentUser>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn get_one(
+    State(state): State<AppState>,
+    Extension(CurrentUser(user_id)): Extension<CurrentUser>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
     info!(target = "http", route = "/notes#get", user_id = %user_id, id = %id, "incoming get note");
     match note_service::get_note(&state, user_id, id).await {
         Ok(note) => (axum::http::StatusCode::OK, Json(note)).into_response(),
@@ -43,7 +60,12 @@ async fn get_one(State(state): State<AppState>, Extension(CurrentUser(user_id)):
     }
 }
 
-async fn update(State(state): State<AppState>, Extension(CurrentUser(user_id)): Extension<CurrentUser>, Path(id): Path<Uuid>, Json(req): Json<UpdateNoteRequest>) -> impl IntoResponse {
+async fn update(
+    State(state): State<AppState>,
+    Extension(CurrentUser(user_id)): Extension<CurrentUser>,
+    Path(id): Path<Uuid>,
+    Json(req): Json<UpdateNoteRequest>,
+) -> impl IntoResponse {
     info!(target = "http", route = "/notes#update", user_id = %user_id, id = %id, "incoming update note");
     match note_service::update_note(&state, user_id, id, req).await {
         Ok(note) => (axum::http::StatusCode::OK, Json(note)).into_response(),
@@ -51,7 +73,11 @@ async fn update(State(state): State<AppState>, Extension(CurrentUser(user_id)): 
     }
 }
 
-async fn remove(State(state): State<AppState>, Extension(CurrentUser(user_id)): Extension<CurrentUser>, Path(id): Path<Uuid>) -> impl IntoResponse {
+async fn remove(
+    State(state): State<AppState>,
+    Extension(CurrentUser(user_id)): Extension<CurrentUser>,
+    Path(id): Path<Uuid>,
+) -> impl IntoResponse {
     info!(target = "http", route = "/notes#delete", user_id = %user_id, id = %id, "incoming delete note");
     match note_service::delete_note(&state, user_id, id).await {
         Ok(()) => (axum::http::StatusCode::NO_CONTENT, "").into_response(),
@@ -64,5 +90,6 @@ fn error_response<E: std::fmt::Display>(e: E) -> axum::response::Response {
     (
         axum::http::StatusCode::BAD_REQUEST,
         Json(serde_json::json!({ "error": e.to_string() })),
-    ).into_response()
+    )
+        .into_response()
 }
