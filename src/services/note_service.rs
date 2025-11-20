@@ -58,7 +58,7 @@ pub async fn list_notes(
     tag: Option<String>,
     keyword: Option<String>,
 ) -> Result<Vec<Note>, NoteError> {
-    let mut q = String::from("SELECT id, user_id, title, content, tags, created_at, updated_at FROM notes WHERE user_id = ?");
+    let mut q = String::from("SELECT id, user_id, title, content, category, tags, created_at, updated_at FROM notes WHERE user_id = ?");
     if tag.is_some() {
         q.push_str(" AND tags LIKE ?");
     }
@@ -80,7 +80,7 @@ pub async fn list_notes(
 }
 
 pub async fn get_note(state: &AppState, user_id: Uuid, note_id: Uuid) -> Result<Note, NoteError> {
-    let note = sqlx::query_as::<_, Note>("SELECT id, user_id, title, content, tags, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?")
+    let note = sqlx::query_as::<_, Note>("SELECT id, user_id, title, content, category, tags, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?")
         .bind(note_id)
         .bind(user_id)
         .fetch_optional(&state.db)

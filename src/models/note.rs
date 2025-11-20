@@ -9,6 +9,7 @@ pub struct Note {
     pub user_id: Uuid,
     pub title: String,
     pub content: String,
+    pub category: Option<String>,
     pub tags: Option<String>, // comma-separated tags, simple approach
     pub created_at: DateTime<FixedOffset>,
     pub updated_at: DateTime<FixedOffset>,
@@ -55,6 +56,7 @@ impl<'r> sqlx::FromRow<'r, MySqlRow> for Note {
             user_id: row.try_get("user_id")?,
             title: row.try_get("title")?,
             content: row.try_get("content")?,
+            category: row.try_get("category")?,
             tags: row.try_get("tags")?,
             created_at,
             updated_at,
